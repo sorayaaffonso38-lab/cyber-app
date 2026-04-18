@@ -128,7 +128,7 @@
 <p class="font-label text-xs uppercase tracking-[0.2em] text-gray-500">01 // QUANTUM PROTOCOL STATUS</p>
 <h2 class="font-headline text-lg smoked-cyan uppercase font-bold">Patrimônio Total</h2>
 <div class="flex items-baseline gap-2">
-<span class="font-headline text-5xl md:text-7xl font-black text-on-surface tracking-tighter">R$ 1.240.890,00</span>
+<span id="total-balance" class="font-headline text-5xl md:text-7xl font-black text-on-surface tracking-tighter">R$ 0,00</span>
 <span class="text-[#00FF41] font-label text-sm font-bold flex items-center gap-1">
 <span class="material-symbols-outlined text-xs" data-icon="trending_up">trending_up</span> +4.2%
                     </span>
@@ -159,8 +159,8 @@
 <span class="material-symbols-outlined text-gray-600 group-hover:text-[#00FF41] transition-colors" data-icon="person">person</span>
 </div>
 <div class="space-y-1">
-<p class="text-3xl font-bold font-body">R$ 450.230,15</p>
-<p class="text-xs text-gray-400">Available across 4 nodes</p>
+<p id="pf-balance" class="text-3xl font-bold font-body">R$ 0,00</p>
+<p class="text-xs text-gray-400">Conta Pessoal</p>
 </div>
 <div class="mt-8 flex gap-4">
 <button class="bg-primary-container text-on-primary px-6 py-2 text-xs font-bold uppercase tracking-widest hover:shadow-[0_0_15px_rgba(0,255,65,0.3)] transition-all">Move Assets</button>
@@ -178,8 +178,8 @@
 <span class="material-symbols-outlined text-gray-600 group-hover:text-[#ff4500] transition-colors" data-icon="business_center">business_center</span>
 </div>
 <div class="space-y-1">
-<p class="text-3xl font-bold font-body text-on-surface">R$ 790.659,85</p>
-<p class="text-xs text-gray-400">Candy Cyber Ventures Ltd.</p>
+<p id="pj-balance" class="text-3xl font-bold font-body text-on-surface">R$ 0,00</p>
+<p class="text-xs text-gray-400">Conta Empresarial</p>
 </div>
 <div class="mt-8 flex gap-4">
 <button class="bg-primary-container text-on-primary px-6 py-2 text-xs font-bold uppercase tracking-widest hover:shadow-[0_0_15px_rgba(0,255,65,0.3)] transition-all">Capital Injection</button>
@@ -347,9 +347,32 @@
 })();
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
 <script src="voice-agent.js"></script>
 
 <script>
+// Load real balances from Supabase
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+
+  const { data: accounts } = await db
+    .from('accounts')
+    .select('*')
+    .eq('user_id', session.user.id);
+
+  if (!accounts || accounts.length === 0) return;
+
+  const pf = accounts.find(a => a.type === 'PF');
+  const pj = accounts.find(a => a.type === 'PJ');
+  const total = accounts.reduce((sum, a) => sum + Number(a.balance), 0);
+
+  document.getElementById('total-balance').textContent = formatBRL(total);
+  if (pf) document.getElementById('pf-balance').textContent = formatBRL(pf.balance);
+  if (pj) document.getElementById('pj-balance').textContent = formatBRL(pj.balance);
+})();
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
 }
